@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/TexnoViktor/short-circuit-calculator/internal/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/yourusername/short-circuit-calculator/internal/handlers"
 )
 
 func main() {
