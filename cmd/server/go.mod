@@ -1,4 +1,4 @@
-module github.com/yourusername/short-circuit-calculator
+module github.com/TexnoViktor/short-circuit-calculator
 
 go 1.21
 
