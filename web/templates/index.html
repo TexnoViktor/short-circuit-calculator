@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор для розрахунку струмів КЗ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/styles.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Калькулятор для розрахунку струмів КЗ</a>
+        </div>
+    </nav>
+
+    <main class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4>Вибір розрахунку</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" id="calculationTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="cable-selection-tab" data-bs-toggle="tab" data-bs-target="#cable-selection" type="button" role="tab">Вибір кабелів</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="sc-currents-tab" data-bs-toggle="tab" data-bs-target="#sc-currents" type="button" role="tab">Струми КЗ на шинах ГПП</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="em-sc-currents-tab" data-bs-toggle="tab" data-bs-target="#em-sc-currents" type="button" role="tab">Струми КЗ для підстанції ХПнЕМ</button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content pt-3" id="calculationTabsContent">
+                            <!-- Форма для вибору кабелів -->
+                            <div class="tab-pane fade show active" id="cable-selection" role="tabpanel">
+                                <form id="cable-selection-form">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="sn" class="form-label">Номінальна потужність трансформатора (кВА)</label>
+                                            <input type="number" class="form-control" id="sn" name="sn" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="un" class="form-label">Номінальна напруга (кВ)</label>
+                                            <input type="number" class="form-control" id="un" name="un" value="10" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="cosFi" class="form-label">Коефіцієнт потужності</label>
+                                            <input type="number" step="0.01" class="form-control" id="cosFi" name="cosFi" value="0.9" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="length" class="form-label">Довжина кабельної лінії (км)</label>
+                                            <input type="number" step="0.01" class="form-control" id="length" name="length" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="installMethod" class="form-label">Спосіб прокладки кабелю</label>
+                                            <select class="form-select" id="installMethod" name="installMethod" required>
+                                                <option value="ground">У землі</option>
+                                                <option value="air">У повітрі</option>
+                                                <option value="duct">У каналах</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="cableCount" class="form-label">Кількість кабелів</label>
+                                            <input type="number" class="form-control" id="cableCount" name="cableCount" value="1" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="ambientTemp" class="form-label">Температура навколишнього середовища (°C)</label>
+                                            <input type="number" class="form-control" id="ambientTemp" name="ambientTemp" value="25" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="soilThermalRes" class="form-label">Питомий тепловий опір ґрунту</label>
+                                            <input type="number" step="0.1" class="form-control" id="soilThermalRes" name="soilThermalRes" value="1.2" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <button type="submit" class="btn btn-primary">Розрахувати</button>
+                                        </div>
+                                    </div>
+                                </form>
+                                
+                                <div id="cable-result" class="mt-4" style="display: none;">
+                                    <h4>Результати вибору кабелю</h4>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <th>Тип кабелю</th>
+                                                <td id="cable-type"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Переріз кабелю (мм²)</th>
+                                                <td id="cable-section"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Номінальний струм (А)</th>
+                                                <td id="rated-current"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Допустиме навантаження (А)</th>
+                                                <td id="permissible-load"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Падіння напруги (%)</th>
+                                                <td id="voltage-drop"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Результат перевірки</th>
+                                                <td id="cable-valid"></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Форма для розрахунку струмів КЗ на шинах ГПП -->
+                            <div class="tab-pane fade" id="sc-currents" role="tabpanel">
+                                <form id="sc-currents-form">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="systemVoltage" class="form-label">Напруга системи (кВ)</label>
+                                            <input type="number" class="form-control" id="systemVoltage" name="systemVoltage" value="10" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="systemPower" class="form-label">Потужність системи (МВА)</label>
+                                            <input type="number" class="form-control" id="systemPower" name="systemPower" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="xc" class="form-label">Індуктивний опір системи (Ом)</label>
+                                            <input type="number" step="0.001" class="form-control" id="xc" name="xc" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="rc" class="form-label">Активний опір системи (Ом)</label>
+                                            <input type="number" step="0.001" class="form-control" id="rc" name="rc" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="l1" class="form-label">Довжина лінії 1 (км)</label>
+                                            <input type="number" step="0.01" class="form-control" id="l1" name="l1" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="x1" class="form-label">Питомий індуктивний опір лінії 1 (Ом/км)</label>
+                                            <input type="number" step="0.001" class="form-control" id="x1" name="x1" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="r1" class="form-label">Питомий активний опір лінії 1 (Ом/км)</label>
+                                            <input type="number" step="0.001" class="form-control" id="r1" name="r1" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="l2" class="form-label">Довжина лінії 2 (км)</label>
+                                            <input type="number" step="0.01" class="form-control" id="l2" name="l2" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="x2" class="form-label">Питомий індуктивний опір лінії 2 (Ом/км)</label>
+                                            <input type="number" step="0.001" class="form-control" id="x2" name="x2" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="r2" class="form-label">Питомий активний опір лінії 2 (Ом/км)</label>
+                                            <input type="number" step="0.001" class="form-control" id="r2" name="r2" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <button type="submit" class="btn btn-primary">Розрахувати</button>
+                                        </div>
+                                    </div>
+                                </form>
+                                
+                                <div id="sc-currents-result" class="mt-4" style="display: none;">
+                                    <h4>Результати розрахунку струмів КЗ</h4>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <th>Струм трифазного КЗ (кА)</th>
+                                                <td id="three-phase-current"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Струм однофазного КЗ (кА)</th>
+                                                <td id="single-phase-current"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Ударний струм (кА)</th>
+                                                <td id="impulse-current"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Тепловий імпульс (кА²·с)</th>
+                                                <td id="thermal-impulse"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Термічна стійкість</th>
+                                                <td id="thermal-stability"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Мінімальний переріз для термічної стійкості (мм²)</th>
+                                                <td id="thermal-stability-min"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Сила при КЗ для перевірки динамічної стійкості (Н)</th>
+                                                <td id="dynamic-stability-force"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Динамічна стійкість</th>
+                                                <td id="dynamic-stability"></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Форма для розрахунку струмів КЗ для підстанції ХПнЕМ -->
+                            <div class="tab-pane fade" id="em-sc-currents" role="tabpanel">
+                                <form id="em-sc-currents-form">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="emSystemVoltage" class="form-label">Напруга системи (кВ)</label>
+                                            <input type="number" class="form-control" id="emSystemVoltage" name="systemVoltage" value="10" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="normalModeSc" class="form-label">Потужність КЗ в нормальному режимі (МВА)</label>
+                                            <input type="number" class="form-control" id="normalModeSc" name="normalModeSc" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="minModeSc" class="form-label">Потужність КЗ в мінімальному режимі (МВА)</label>
+                                            <input type="number" class="form-control" id="minModeSc" name="minModeSc" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="emergencyModeSc" class="form-label">Потужність КЗ в аварійному режимі (МВА)</label>
+                                            <input type="number" class="form-control" id="emergencyModeSc" name="emergencyModeSc" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <button type="submit" class="btn btn-primary">Розрахувати</button>
+                                        </div>
+                                    </div>
+                                </form>
+                                
+                                <div id="em-sc-currents-result" class="mt-4" style="display: none;">
+                                    <h4>Результати розрахунку струмів КЗ для підстанції ХПнЕМ</h4>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Режим</th>
+                                                    <th>Струм трифазного КЗ (кА)</th>
+                                                    <th>Струм однофазного КЗ (кА)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <th>Нормальний режим</th>
+                                                    <td id="normal-mode-three-phase"></td>
+                                                    <td id="normal-mode-single-phase"></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Мінімальний режим</th>
+                                                    <td id="min-mode-three-phase"></td>
+                                                    <td id="min-mode-single-phase"></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Аварійний режим</th>
+                                                    <td id="emergency-mode-three-phase"></td>
+                                                    <td id="emergency-mode-single-phase"></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-dark text-white py-3 mt-4">
+        <div class="container text-center">
+            <p>© 2024 Калькулятор для розрахунку струмів КЗ</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/scripts.js"></script>
+</body>
+</html>
